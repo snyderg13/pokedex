@@ -32,12 +32,16 @@ func main() {
 	inputScanner := bufio.NewScanner(os.Stdin)
 
 	for {
+		// prompt user for input
 		fmt.Print("Pokedex > ")
 		inputScanner.Scan()
+
+		// check for scanner errors
 		err := inputScanner.Err()
 		if err != nil {
 			fmt.Errorf("inputScanner returned error: %w", err)
 		}
+
 		// get text input from the user
 		line = inputScanner.Text()
 
