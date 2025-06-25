@@ -29,6 +29,10 @@ func main() {
 		}
 		line = inputScanner.Text()
 		words = cleanInput(line)
+		if words[0] == "exit" {
+			fmt.Println("Goodbye!")
+			os.Exit(0)
+		}
 		fmt.Printf("\nYour command was: %s\n", words[0])
 	}
 }
