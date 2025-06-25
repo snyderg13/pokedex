@@ -7,10 +7,15 @@ import (
 	"strings"
 )
 
+type cmdConfig struct {
+	Next string
+	Prev string
+}
+
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(cmdConfig) error
 }
 
 var pokeCmds = map[string]cliCommand{
@@ -18,16 +23,6 @@ var pokeCmds = map[string]cliCommand{
 		name:        "exit",
 		description: "Exit the Pokedex",
 		callback:    commandExit,
-	},
-	"test_err": {
-		name:        "error",
-		description: "test error return handling",
-		callback:    commandTestError,
-	},
-	"help": {
-		name:        "help",
-		description: "Displays a help message",
-		callback:    commandHelp,
 	},
 	"map": {
 		name:        "map",
@@ -46,32 +41,28 @@ func cleanInput(text string) []string {
 	return strings.Fields(strings.ToLower(text))
 }
 
-func commandExit() error {
+func commandExit(cfg cmdConfig) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandTestError() error {
-	return fmt.Errorf("test error returning")
-}
-
-func commandHelp() error {
+func commandHelp(cfg cmdConfig) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Printf("Usage:\n\n")
-	fmt.Printf("help: Displays a help message\n")
-	fmt.Printf("exit: Exit the pokedex\n")
+	fmt.Printf("help:\tDisplays a help message\n")
 
 	// @TODO: figure out how to loop over pokeCmds without compiler errors
-	//        about references cycles
-	// for _, cmd := range pokeCmds {
-	// 	fmt.Printf("$s: %s\n", cmd.name, cmd.description)
-	// }
+	//        about initialization cycles when "help" is in the cli registry
+	//        for now, it has been removed from the registry
+	for _, cmd := range pokeCmds {
+		fmt.Printf("%s:\t%s\n", cmd.name, cmd.description)
+	}
 
 	return nil
 }
 
-func commandMap() error {
+func commandMap(cfg cmdConfig) error {
 
 	return nil
 }
@@ -79,6 +70,7 @@ func commandMap() error {
 func main() {
 	var line string
 	var words []string
+	var worldCfg cmdConfig
 	inputScanner := bufio.NewScanner(os.Stdin)
 
 	for {
@@ -104,13 +96,21 @@ func main() {
 			if words == nil {
 				fmt.Println()
 			}
+
 			command := words[0]
-			if cmd, ok := pokeCmds[command]; !ok {
+			// handle "help" command separately as it's not in the cli registry
+			// due to initialization cycle compiler errors when in the registry
+			if command == "help" {
+				commandHelp(worldCfg)
+			} else if cmd, ok := pokeCmds[command]; !ok {
 				fmt.Printf("Unknown command\n")
+			} else if err := cmd.callback(worldCfg); err != nil {
+				// @TODO: not sure if below is the best way to do this
+				//        it looks gross and is most likely not something
+				//        that should be delayed to the user
+				fmt.Println(fmt.Errorf("command \"%s\" returned error \"%w\"", cmd.name, err))
 			} else {
-				if err := cmd.callback(); err != nil {
-					fmt.Printf("Command %s returned error %w\n", cmd.name, err)
-				}
+				// @TODO: other logic to be added if needed; empt for now on purpose
 			}
 		}
 	}
