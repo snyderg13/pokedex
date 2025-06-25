@@ -7,6 +7,32 @@ import (
 	"strings"
 )
 
+type cliCommand struct {
+	name        string
+	description string
+	callback    func() error
+}
+
+var pokeCmds = map[string]cliCommand{
+	"exit": {
+		name:        "exit",
+		description: "Exit the Pokedex",
+		callback:    commandExit,
+	},
+	"test_err": {
+		name:        "error",
+		description: "test error return handling",
+		callback:    commandTestError,
+	},
+	"help": {
+		name:        "help",
+		description: "Displays a help message",
+		callback:    printUsage,
+	},
+}
+
+// sanitize user input by taking input text
+// make it lowercase and split into a slice
 func cleanInput(text string) []string {
 	if len(text) == 0 {
 		return []string{}
@@ -15,15 +41,29 @@ func cleanInput(text string) []string {
 	return strings.Fields(strings.ToLower(text))
 }
 
-func printUsage() {
-	fmt.Println("-----------------------------------------------------")
-	fmt.Println("Just type in a message and we'll echo the first word")
-	fmt.Println("-----------------------------------------------------")
-}
-
-func commandExit() {
+func commandExit() error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
+	return nil
+}
+
+func commandTestError() error {
+	return fmt.Errorf("test error returning")
+}
+
+func printUsage() error {
+	fmt.Println("Welcome to the Pokedex!")
+	fmt.Printf("Usage:\n\n")
+	fmt.Printf("help: Displays a help message\n")
+	fmt.Printf("exit: Exit the pokedex\n")
+
+	// @TODO: figure out how to loop over pokeCmds without compiler errors
+	//        about back references
+	// for _, cmd := range pokeCmds {
+	// 	fmt.Printf("$s: %s\n", cmd.name, cmd.description)
+	// }
+
+	return nil
 }
 
 func main() {
@@ -54,13 +94,13 @@ func main() {
 			if words == nil {
 				fmt.Println()
 			}
-			switch words[0] {
-			case "exit":
-				commandExit()
-			case "help":
-				printUsage()
-			default:
+			command := words[0]
+			if cmd, ok := pokeCmds[command]; !ok {
 				fmt.Printf("Unknown command\n")
+			} else {
+				if err := cmd.callback(); err != nil {
+					fmt.Printf("Command %s returned error %w\n", cmd.name, err)
+				}
 			}
 		}
 	}
