@@ -58,7 +58,7 @@ func printUsage() error {
 	fmt.Printf("exit: Exit the pokedex\n")
 
 	// @TODO: figure out how to loop over pokeCmds without compiler errors
-	//        about back references
+	//        about references cycles
 	// for _, cmd := range pokeCmds {
 	// 	fmt.Printf("$s: %s\n", cmd.name, cmd.description)
 	// }
