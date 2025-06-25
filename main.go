@@ -21,6 +21,11 @@ func printUsage() {
 	fmt.Println("-----------------------------------------------------")
 }
 
+func commandExit() {
+	fmt.Println("Closing the Pokedex... Goodbye!")
+	os.Exit(0)
+}
+
 func main() {
 	var line string
 	var words []string
@@ -33,16 +38,26 @@ func main() {
 		if err != nil {
 			fmt.Errorf("inputScanner returned error: %w", err)
 		}
+		// get text input from the user
 		line = inputScanner.Text()
-		words = cleanInput(line)
-		switch words[0] {
-		case "exit":
-			fmt.Println("Goodbye!")
-			os.Exit(0)
-		case "help":
-			printUsage()
-		default:
-			fmt.Printf("\nYour command was: %s\n", words[0])
+
+		// handle scenario where user only hits the enter key
+		if len(line) == 0 {
+			fmt.Print()
+		} else {
+			// clean up the input and act on the commands
+			words = cleanInput(line)
+			if words == nil {
+				fmt.Println()
+			}
+			switch words[0] {
+			case "exit":
+				commandExit()
+			case "help":
+				printUsage()
+			default:
+				fmt.Printf("Unknown command\n")
+			}
 		}
 	}
 }
