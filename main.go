@@ -27,7 +27,12 @@ var pokeCmds = map[string]cliCommand{
 	"help": {
 		name:        "help",
 		description: "Displays a help message",
-		callback:    printUsage,
+		callback:    commandHelp,
+	},
+	"map": {
+		name:        "map",
+		description: "Displays world locations",
+		callback:    commandMap,
 	},
 }
 
@@ -51,7 +56,7 @@ func commandTestError() error {
 	return fmt.Errorf("test error returning")
 }
 
-func printUsage() error {
+func commandHelp() error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Printf("Usage:\n\n")
 	fmt.Printf("help: Displays a help message\n")
@@ -62,6 +67,11 @@ func printUsage() error {
 	// for _, cmd := range pokeCmds {
 	// 	fmt.Printf("$s: %s\n", cmd.name, cmd.description)
 	// }
+
+	return nil
+}
+
+func commandMap() error {
 
 	return nil
 }
