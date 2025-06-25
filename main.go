@@ -15,6 +15,4 @@ func cleanInput(text string) []string {
 
 func main() {
 	fmt.Println("Hello World!")
-	cleanInput("ANOTHER TEST STRING    IN    HERE")
-	cleanInput("My TeST Strings hereE")
 }
