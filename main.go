@@ -54,7 +54,7 @@ type cmdConfig struct {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(cmdConfig) error
+	callback    func(*cmdConfig) error
 }
 
 var pokeCmds = map[string]cliCommand{
@@ -68,6 +68,11 @@ var pokeCmds = map[string]cliCommand{
 		description: "Displays world locations",
 		callback:    commandMap,
 	},
+	"mapb": {
+		name:        "mapb",
+		description: "Displays world locations",
+		callback:    commandMapb,
+	},
 }
 
 // sanitize user input by taking input text
@@ -80,13 +85,13 @@ func cleanInput(text string) []string {
 	return strings.Fields(strings.ToLower(text))
 }
 
-func commandExit(cfg cmdConfig) error {
+func commandExit(cfg *cmdConfig) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(cfg cmdConfig) error {
+func commandHelp(cfg *cmdConfig) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Printf("Usage:\n\n")
 	fmt.Printf("help:\tDisplays a help message\n")
@@ -104,7 +109,7 @@ func commandHelp(cfg cmdConfig) error {
 // @TODO: handle appending the offset and limit query params to end of URL
 // @TODO: for adding the ability to go forward and back and setting the
 // @TODO: next/prev fields of the cmdConfig param
-func commandMap(cfg cmdConfig) error {
+func commandMap(cfg *cmdConfig) error {
 	debug := false
 
 	if debug {
@@ -112,6 +117,9 @@ func commandMap(cfg cmdConfig) error {
 	}
 
 	fullURL := pokeAPIBaseURL + "location-area/"
+	if len(cfg.Next) != 0 {
+		fullURL = cfg.Next
+	}
 	res, err := http.Get(fullURL)
 	if err != nil {
 		fmt.Println("http req failed")
@@ -140,6 +148,79 @@ func commandMap(cfg cmdConfig) error {
 		fmt.Printf("type(results) = %T\n", results)
 	}
 
+	cfg.Next = results.Next
+	cfg.Prev = results.Prev
+
+	if debug {
+		fmt.Printf("type(results.Prev) = %T\n", results.Prev)
+		fmt.Printf("results.Prev = %v\n", results.Prev)
+	}
+
+	loc_names := []string{}
+	for _, name := range results.Results {
+		loc_names = append(loc_names, name.Name)
+		fmt.Println(name.Name)
+	}
+
+	if debug {
+		fmt.Println(loc_names)
+	}
+	return nil
+}
+
+// @TODO: split out HTTP GET functionality to be called
+// @TODO: by both commandMap and commandMapb
+func commandMapb(cfg *cmdConfig) error {
+	debug := false
+
+	if debug {
+		fmt.Printf("cfg.Next = %s, cfg.Prev = %s\n", cfg.Next, cfg.Prev)
+	}
+
+	fullURL := pokeAPIBaseURL + "location-area/"
+	if len(cfg.Prev) == 0 {
+		// fullURL = cfg.Prev
+		fmt.Println("You're on the first page")
+		return nil
+	} else {
+		fullURL = cfg.Prev
+	}
+	res, err := http.Get(fullURL)
+	if err != nil {
+		fmt.Println("http req failed")
+		fmt.Println(fmt.Errorf("http req failed: %w", err))
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode > 299 {
+		return fmt.Errorf("status code (%d) > 299", res.StatusCode)
+	} else if res.StatusCode != 200 {
+		fmt.Printf("status code (%d) != 200\n", res.StatusCode)
+	}
+
+	var results locAreaResp
+	decoder := json.NewDecoder(res.Body)
+	err = decoder.Decode(&results)
+	if err != nil {
+		fmt.Println(fmt.Errorf("json decode returned %w", err))
+		return fmt.Errorf("json decode returned %w", err)
+	}
+
+	if debug {
+		fmt.Println(results)
+		fmt.Println()
+		fmt.Printf("type(results) = %T\n", results)
+	}
+
+	cfg.Next = results.Next
+	cfg.Prev = results.Prev
+
+	if debug {
+		fmt.Printf("type(results.Prev) = %T\n", results.Prev)
+		fmt.Printf("results.Prev = %v\n", results.Prev)
+	}
+
 	loc_names := []string{}
 	for _, name := range results.Results {
 		loc_names = append(loc_names, name.Name)
@@ -156,6 +237,7 @@ func main() {
 	var line string
 	var words []string
 	worldCfg := cmdConfig{}
+	mainDebug := false
 	inputScanner := bufio.NewScanner(os.Stdin)
 
 	for {
@@ -186,10 +268,10 @@ func main() {
 			// handle "help" command separately as it's not in the cli registry
 			// due to initialization cycle compiler errors when in the registry
 			if command == "help" {
-				commandHelp(worldCfg)
+				commandHelp(&worldCfg)
 			} else if cmd, ok := pokeCmds[command]; !ok {
 				fmt.Printf("Unknown command\n")
-			} else if err := cmd.callback(worldCfg); err != nil {
+			} else if err := cmd.callback(&worldCfg); err != nil {
 				// @TODO: not sure if below is the best way to do this
 				//        it looks gross and is most likely not something
 				//        that should be delayed to the user
@@ -197,6 +279,9 @@ func main() {
 			} else {
 				// @TODO: other logic to be added if needed
 				//        intentionally empty for now on purpose
+				if mainDebug {
+					fmt.Printf("worldCfg.Next = %s, worldCfg.Prev = %s\n", worldCfg.Next, worldCfg.Prev)
+				}
 			}
 		}
 	}
