@@ -57,22 +57,31 @@ type cliCommand struct {
 	callback    func(*cmdConfig) error
 }
 
-var pokeCmds = map[string]cliCommand{
-	"exit": {
-		name:        "exit",
-		description: "Exit the Pokedex",
-		callback:    commandExit,
-	},
-	"map": {
-		name:        "map",
-		description: "Displays world locations",
-		callback:    commandMap,
-	},
-	"mapb": {
-		name:        "mapb",
-		description: "Displays world locations",
-		callback:    commandMapb,
-	},
+var pokeCmds map[string]cliCommand
+
+func initCmds() {
+	pokeCmds = map[string]cliCommand{
+		"exit": {
+			name:        "exit",
+			description: "Exit the Pokedex",
+			callback:    commandExit,
+		},
+		"help": {
+			name:        "help",
+			description: "Displays a help message",
+			callback:    commandHelp,
+		},
+		"map": {
+			name:        "map",
+			description: "Displays world locations",
+			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Displays world locations",
+			callback:    commandMapb,
+		},
+	}
 }
 
 // sanitize user input by taking input text
@@ -94,11 +103,7 @@ func commandExit(cfg *cmdConfig) error {
 func commandHelp(cfg *cmdConfig) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Printf("Usage:\n\n")
-	fmt.Printf("help:\tDisplays a help message\n")
 
-	// @TODO: figure out how to loop over pokeCmds without compiler errors
-	//        about initialization cycles when "help" is in the cli registry
-	//        for now, it has been removed from the registry
 	for _, cmd := range pokeCmds {
 		fmt.Printf("%s:\t%s\n", cmd.name, cmd.description)
 	}
@@ -179,7 +184,6 @@ func commandMapb(cfg *cmdConfig) error {
 
 	fullURL := pokeAPIBaseURL + "location-area/"
 	if len(cfg.Prev) == 0 {
-		// fullURL = cfg.Prev
 		fmt.Println("You're on the first page")
 		return nil
 	} else {
@@ -237,6 +241,7 @@ func main() {
 	var line string
 	var words []string
 	worldCfg := cmdConfig{}
+	initCmds()
 	mainDebug := false
 	inputScanner := bufio.NewScanner(os.Stdin)
 
@@ -265,11 +270,7 @@ func main() {
 			}
 
 			command := words[0]
-			// handle "help" command separately as it's not in the cli registry
-			// due to initialization cycle compiler errors when in the registry
-			if command == "help" {
-				commandHelp(&worldCfg)
-			} else if cmd, ok := pokeCmds[command]; !ok {
+			if cmd, ok := pokeCmds[command]; !ok {
 				fmt.Printf("Unknown command\n")
 			} else if err := cmd.callback(&worldCfg); err != nil {
 				// @TODO: not sure if below is the best way to do this
