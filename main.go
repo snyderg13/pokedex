@@ -127,6 +127,7 @@ func main() {
 	var words []string
 	worldCfg := cmdConfig{}
 	initCmds()
+	pokeapi.Init()
 	mainDebug := false
 	inputScanner := bufio.NewScanner(os.Stdin)
 
