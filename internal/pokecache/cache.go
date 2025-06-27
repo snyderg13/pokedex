@@ -14,7 +14,6 @@ type cacheEntry struct {
 type Cache struct {
 	cacheData map[string]cacheEntry
 	mu        *sync.Mutex
-	interval  time.Duration
 }
 
 // creates new Cache and launches the reapLoop as a go routine
@@ -23,13 +22,8 @@ func NewCache(interval time.Duration) Cache {
 	c := Cache{
 		cacheData: make(map[string]cacheEntry),
 		mu:        &sync.Mutex{},
-		interval:  interval,
 	}
-	// could possibly pass the interval to the reapLoop so that
-	// it will be aware of the cache delete interval and then
-	// interval could be removed from the Cache struct
-	cacheTicker := time.NewTicker(interval)
-	go c.reapLoop(cacheTicker)
+	go c.reapLoop(interval)
 
 	return c
 }
@@ -66,14 +60,13 @@ func (c Cache) Get(key string) ([]byte, bool) {
 
 // blocks on the passed ticker channel until time data
 // is sent at the interval specified at Cache creation
-func (c Cache) reapLoop(reapTicker *time.Ticker) {
-
+func (c Cache) reapLoop(interval time.Duration) {
+	reapTicker := time.NewTicker(interval)
 	for ; true; <-reapTicker.C {
 		fmt.Println("CACHE: reapLoop is executing, time: ", time.Now())
 		c.mu.Lock()
 		for key, entry := range c.cacheData {
-			timeSinceCreation := time.Since(entry.createdAt)
-			if timeSinceCreation > c.interval {
+			if time.Since(entry.createdAt) > interval {
 				fmt.Println("CACHE: Deleting from cache item with key: ", key)
 				delete(c.cacheData, key)
 			}
