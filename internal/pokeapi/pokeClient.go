@@ -54,53 +54,44 @@ func GetLocationAreas(locURL string) (LocAreaResp, error) {
 	var results LocAreaResp
 	cacheData, found := pokeAPICache.Get(locURL)
 	if found {
-		fmt.Println("len(cacheData): ", len(cacheData))
-		fmt.Println("cache item data: ", cacheData)
 		err := json.Unmarshal(cacheData, &results)
 		if err != nil {
 			fmt.Println("failed to unmarshal cache data", err)
 		}
-	} else {
-		res, err := http.Get(locURL)
-		if err != nil {
-			fmt.Println("http req failed")
-			fmt.Println(fmt.Errorf("http req failed: %w", err))
-			return LocAreaResp{}, err
-		}
-		defer res.Body.Close()
-
-		if res.StatusCode > 299 {
-			return LocAreaResp{}, fmt.Errorf("status code (%d) > 299", res.StatusCode)
-		} else if res.StatusCode != 200 {
-			fmt.Printf("status code (%d) != 200\n", res.StatusCode)
-		}
-
-		// var results LocAreaResp
-		decoder := json.NewDecoder(res.Body)
-		err = decoder.Decode(&results)
-		if err != nil {
-			fmt.Println(fmt.Errorf("json decode returned %w", err))
-			return LocAreaResp{}, fmt.Errorf("json decode returned %w", err)
-		}
-
-		// @TODO: might need to split json/data handling out of GET handling
-		// @TODO: since below call adds empty data since above decode
-		// @TODO: operation empties the res.Body buffer
-		// or do I need to just (re)marshal data and then unmarshal it
-		// to get it again or create a copy of it to add to cache?
-
-		// convert results to []byte and add to the cache
-		bytesBody, err := io.ReadAll(res.Body)
-		fmt.Println("len(bytesBody): ", len(bytesBody))
-		if err != nil {
-			fmt.Println(err)
-			return LocAreaResp{}, err
-		}
-		pokeAPICache.Add(locURL, bytesBody)
+		fmt.Println("CLIENT: Cache get was used")
+		return results, err //nil
 	}
 
-	for _, name := range results.Results {
-		fmt.Println(name.Name)
+	res, err := http.Get(locURL)
+	if err != nil {
+		fmt.Println("http req failed")
+		fmt.Println(fmt.Errorf("http req failed: %w", err))
+		return LocAreaResp{}, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode > 299 {
+		return LocAreaResp{}, fmt.Errorf("status code (%d) > 299", res.StatusCode)
+	} else if res.StatusCode != 200 {
+		fmt.Printf("status code (%d) != 200\n", res.StatusCode)
+	}
+
+	// convert results to []byte and add to the cache
+	bytesBody, err := io.ReadAll(res.Body)
+	fmt.Println("len(bytesBody): ", len(bytesBody))
+	if err != nil {
+		fmt.Println(err)
+		return LocAreaResp{}, err
+	}
+
+	// add data byte slice to cache
+	fmt.Println("CLIENT: Cache add was used")
+	pokeAPICache.Add(locURL, bytesBody)
+
+	// unmarshal into the LocAreaResp to return to the caller
+	err = json.Unmarshal(bytesBody, &results)
+	if err != nil {
+		fmt.Println("failed to unmarshal cache data", err)
 	}
 
 	return results, nil
