@@ -16,11 +16,11 @@ const (
 	cacheReapRate        = 5 * time.Second
 )
 
+var pokeAPIDebug = false
 var pokeAPICache pokecache.Cache
 
 func Init() {
 	pokeAPICache = pokecache.NewCache(cacheReapRate)
-	fmt.Println("pokeAPICache: ", pokeAPICache, &pokeAPICache)
 }
 
 // {
@@ -58,12 +58,16 @@ func GetLocationAreas(locURL string) (LocAreaResp, error) {
 		if err != nil {
 			fmt.Println("failed to unmarshal cache data", err)
 		}
-		fmt.Println("CLIENT: Cache get was used")
-		return results, err //nil
+
+		if pokeAPIDebug {
+			fmt.Println("CLIENT: Cache get was used")
+		}
+		return results, err
 	}
 
 	res, err := http.Get(locURL)
 	if err != nil {
+		// @TODO cleanup below lines
 		fmt.Println("http req failed")
 		fmt.Println(fmt.Errorf("http req failed: %w", err))
 		return LocAreaResp{}, err
@@ -78,15 +82,16 @@ func GetLocationAreas(locURL string) (LocAreaResp, error) {
 
 	// convert results to []byte and add to the cache
 	bytesBody, err := io.ReadAll(res.Body)
-	fmt.Println("len(bytesBody): ", len(bytesBody))
 	if err != nil {
 		fmt.Println(err)
 		return LocAreaResp{}, err
 	}
 
 	// add data byte slice to cache
-	fmt.Println("CLIENT: Cache add was used")
 	pokeAPICache.Add(locURL, bytesBody)
+	if pokeAPIDebug {
+		fmt.Println("CLIENT: Cache add was used")
+	}
 
 	// unmarshal into the LocAreaResp to return to the caller
 	err = json.Unmarshal(bytesBody, &results)
