@@ -74,9 +74,6 @@ func commandHelp(cfg *cmdConfig) error {
 	return nil
 }
 
-// @TODO: handle appending the offset and limit query params to end of URL
-// @TODO: for adding the ability to go forward and back and setting the
-// @TODO: next/prev fields of the cmdConfig param
 func commandMap(cfg *cmdConfig) error {
 	debug := false
 
@@ -89,6 +86,10 @@ func commandMap(cfg *cmdConfig) error {
 	cfg.Next = results.Next
 	cfg.Prev = results.Prev
 
+	for _, name := range results.Results {
+		fmt.Println(name.Name)
+	}
+
 	if debug {
 		fmt.Printf("cfg.Next = %s, cfg.Prev = %s\n", cfg.Next, cfg.Prev)
 	}
@@ -96,8 +97,6 @@ func commandMap(cfg *cmdConfig) error {
 	return nil
 }
 
-// @TODO: split out HTTP GET functionality to be called
-// @TODO: by both commandMap and commandMapb
 func commandMapb(cfg *cmdConfig) error {
 	if len(cfg.Prev) == 0 {
 		fmt.Println("You're on the first page")
@@ -115,6 +114,10 @@ func commandMapb(cfg *cmdConfig) error {
 	cfg.Next = results.Next
 	cfg.Prev = results.Prev
 
+	for _, name := range results.Results {
+		fmt.Println(name.Name)
+	}
+
 	if debug {
 		fmt.Printf("cfg.Next = %s, cfg.Prev = %s\n", cfg.Next, cfg.Prev)
 	}
@@ -127,6 +130,7 @@ func main() {
 	var words []string
 	worldCfg := cmdConfig{}
 	initCmds()
+	pokeapi.Init()
 	mainDebug := false
 	inputScanner := bufio.NewScanner(os.Stdin)
 

@@ -3,13 +3,25 @@ package pokeapi
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"time"
+
+	"github.com/snyderg13/pokedex/internal/pokecache"
 )
 
 const (
 	pokeAPIBaseURL       = "https://pokeapi.co/api/v2/"
 	locationAreaEndpoint = "https://pokeapi.co/api/v2/location-area/"
+	cacheReapRate        = 5 * time.Second
 )
+
+var pokeAPIDebug = false
+var pokeAPICache pokecache.Cache
+
+func Init() {
+	pokeAPICache = pokecache.NewCache(cacheReapRate)
+}
 
 // {
 //   "count": 1089,
@@ -39,8 +51,23 @@ func GetLocationAreas(locURL string) (LocAreaResp, error) {
 		locURL = locationAreaEndpoint
 	}
 
+	var results LocAreaResp
+	cacheData, found := pokeAPICache.Get(locURL)
+	if found {
+		err := json.Unmarshal(cacheData, &results)
+		if err != nil {
+			fmt.Println("failed to unmarshal cache data", err)
+		}
+
+		if pokeAPIDebug {
+			fmt.Println("CLIENT: Cache get was used")
+		}
+		return results, err
+	}
+
 	res, err := http.Get(locURL)
 	if err != nil {
+		// @TODO cleanup below lines
 		fmt.Println("http req failed")
 		fmt.Println(fmt.Errorf("http req failed: %w", err))
 		return LocAreaResp{}, err
@@ -53,16 +80,23 @@ func GetLocationAreas(locURL string) (LocAreaResp, error) {
 		fmt.Printf("status code (%d) != 200\n", res.StatusCode)
 	}
 
-	var results LocAreaResp
-	decoder := json.NewDecoder(res.Body)
-	err = decoder.Decode(&results)
+	// convert results to []byte and add to the cache
+	bytesBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(fmt.Errorf("json decode returned %w", err))
-		return LocAreaResp{}, fmt.Errorf("json decode returned %w", err)
+		fmt.Println(err)
+		return LocAreaResp{}, err
 	}
 
-	for _, name := range results.Results {
-		fmt.Println(name.Name)
+	// add data byte slice to cache
+	pokeAPICache.Add(locURL, bytesBody)
+	if pokeAPIDebug {
+		fmt.Println("CLIENT: Cache add was used")
+	}
+
+	// unmarshal into the LocAreaResp to return to the caller
+	err = json.Unmarshal(bytesBody, &results)
+	if err != nil {
+		fmt.Println("failed to unmarshal cache data", err)
 	}
 
 	return results, nil
