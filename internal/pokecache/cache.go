@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+var cacheDebug bool = false
+var cacheDelDebug bool = true
+
 type cacheEntry struct {
 	createdAt time.Time
 	val       []byte
@@ -18,7 +21,10 @@ type Cache struct {
 
 // creates new Cache and launches the reapLoop as a go routine
 func NewCache(interval time.Duration) Cache {
-	fmt.Println("CACHE: Creating new cache with interval: ", interval)
+	if cacheDebug {
+		fmt.Println("CACHE: Creating new cache with interval: ", interval)
+	}
+
 	c := Cache{
 		cacheData: make(map[string]cacheEntry),
 		mu:        &sync.Mutex{},
@@ -29,8 +35,11 @@ func NewCache(interval time.Duration) Cache {
 }
 
 func (c Cache) Add(key string, val []byte) {
-	fmt.Println("CACHE: Adding item to cache with key: ", key)
-	fmt.Println("CACHE: len(val): ", len(val))
+	if cacheDebug {
+		fmt.Println("CACHE: Adding item to cache with key: ", key)
+		fmt.Println("CACHE: len(val): ", len(val))
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -38,23 +47,35 @@ func (c Cache) Add(key string, val []byte) {
 		createdAt: time.Now(),
 		val:       val,
 	}
-	fmt.Println("CACHE: Added item to cache with key: ", key)
-	fmt.Println("CACHE: Added item to cache with val: ", val)
+
+	if cacheDebug {
+		fmt.Println("CACHE: Added item to cache with key: ", key)
+		fmt.Println("CACHE: Added item to cache with val: ", val)
+	}
 }
 
 func (c Cache) Get(key string) ([]byte, bool) {
-	fmt.Println("CACHE: Looking in cache for item with key: ", key)
+	if cacheDebug {
+		fmt.Println("CACHE: Looking in cache for item with key: ", key)
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	val, ok := c.cacheData[key]
 	if !ok {
-		fmt.Println("CACHE: Did not find item in cache with key: ", key)
+		if cacheDebug {
+			fmt.Println("CACHE: Did not find item in cache with key: ", key)
+		}
+
 		return []byte{}, false
 	}
 
-	fmt.Println("CACHE: Found item in cache with key: ", key)
-	fmt.Println("CACHE: Returning cache data: ", val.val)
+	if cacheDebug {
+		fmt.Println("CACHE: Found item in cache with key: ", key)
+		fmt.Println("CACHE: Returning cache data: ", val.val)
+	}
+
 	return val.val, true
 }
 
@@ -63,11 +84,15 @@ func (c Cache) Get(key string) ([]byte, bool) {
 func (c Cache) reapLoop(interval time.Duration) {
 	reapTicker := time.NewTicker(interval)
 	for ; true; <-reapTicker.C {
-		fmt.Println("CACHE: reapLoop is executing, time: ", time.Now())
+		if cacheDebug {
+			fmt.Println("CACHE: reapLoop is executing, time: ", time.Now())
+		}
 		c.mu.Lock()
 		for key, entry := range c.cacheData {
 			if time.Since(entry.createdAt) > interval {
-				fmt.Println("CACHE: Deleting from cache item with key: ", key)
+				if cacheDebug || cacheDelDebug {
+					fmt.Println("CACHE: Deleting from cache item with key: ", key)
+				}
 				delete(c.cacheData, key)
 			}
 		}
