@@ -17,7 +17,7 @@ type cmdConfig struct {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*cmdConfig) error
+	callback    func(*cmdConfig, ...string) error
 }
 
 var pokeCmds map[string]cliCommand
@@ -44,6 +44,11 @@ func initCmds() {
 			description: "Displays world locations",
 			callback:    commandMapb,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Explore an area for pokemon",
+			callback:    commandExplore,
+		},
 	}
 }
 
@@ -57,13 +62,13 @@ func cleanInput(text string) []string {
 	return strings.Fields(strings.ToLower(text))
 }
 
-func commandExit(cfg *cmdConfig) error {
+func commandExit(cfg *cmdConfig, args ...string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(cfg *cmdConfig) error {
+func commandHelp(cfg *cmdConfig, args ...string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Printf("Usage:\n\n")
 
@@ -74,7 +79,7 @@ func commandHelp(cfg *cmdConfig) error {
 	return nil
 }
 
-func commandMap(cfg *cmdConfig) error {
+func commandMap(cfg *cmdConfig, args ...string) error {
 	debug := false
 
 	var results pokeapi.LocAreaResp
@@ -97,7 +102,7 @@ func commandMap(cfg *cmdConfig) error {
 	return nil
 }
 
-func commandMapb(cfg *cmdConfig) error {
+func commandMapb(cfg *cmdConfig, args ...string) error {
 	if len(cfg.Prev) == 0 {
 		fmt.Println("You're on the first page")
 		return nil
@@ -122,6 +127,15 @@ func commandMapb(cfg *cmdConfig) error {
 		fmt.Printf("cfg.Next = %s, cfg.Prev = %s\n", cfg.Next, cfg.Prev)
 	}
 
+	return nil
+}
+
+func commandExplore(cfg *cmdConfig, args ...string) error {
+	fmt.Println("len(args) = ", len(args))
+	fmt.Println("args = ", args)
+	if len(args) == 0 {
+		return fmt.Errorf("not enough args, expected <location_name>")
+	}
 	return nil
 }
 
@@ -159,9 +173,10 @@ func main() {
 			}
 
 			command := words[0]
+			args := words[1:]
 			if cmd, ok := pokeCmds[command]; !ok {
 				fmt.Printf("Unknown command\n")
-			} else if err := cmd.callback(&worldCfg); err != nil {
+			} else if err := cmd.callback(&worldCfg, args...); err != nil {
 				// @TODO: not sure if below is the best way to do this
 				//        it looks gross and is most likely not something
 				//        that should be delayed to the user
