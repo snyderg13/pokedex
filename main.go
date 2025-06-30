@@ -83,7 +83,7 @@ func commandMap(cfg *cmdConfig, args ...string) error {
 	debug := false
 
 	var results pokeapi.LocAreaResp
-	results, err := pokeapi.GetLocationAreas(cfg.Next)
+	results, err := results.DoGetData(cfg.Next)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func commandMapb(cfg *cmdConfig, args ...string) error {
 	debug := false
 
 	var results pokeapi.LocAreaResp
-	results, err := pokeapi.GetLocationAreas(cfg.Prev)
+	results, err := results.DoGetData(cfg.Prev)
 	if err != nil {
 		return err
 	}
@@ -130,12 +130,31 @@ func commandMapb(cfg *cmdConfig, args ...string) error {
 	return nil
 }
 
+// @TODO add test cases for different commands
 func commandExplore(cfg *cmdConfig, args ...string) error {
 	fmt.Println("len(args) = ", len(args))
 	fmt.Println("args = ", args)
 	if len(args) == 0 {
 		return fmt.Errorf("not enough args, expected <location_name>")
 	}
+	fmt.Printf("Exploring %s...\n", args[0])
+
+	var results pokeapi.LocationDetails
+	results, err := results.DoGetData(args[0])
+	if err != nil {
+		fmt.Println("Exp: get data ret: ", err)
+		return err
+	}
+
+	for _, p := range results.PokemonList {
+		fmt.Println(p.Pokemon.Name)
+	}
+
+	// note that cfg.next and cfg.prev are not updated
+	// since the user only chose to explore an area;
+	// next and prev are only really used for map and mapb
+	// up to this point in development
+
 	return nil
 }
 
@@ -175,7 +194,7 @@ func main() {
 			command := words[0]
 			args := words[1:]
 			if cmd, ok := pokeCmds[command]; !ok {
-				fmt.Printf("Unknown command\n")
+				fmt.Printf("Unknown command: %s\n", command)
 			} else if err := cmd.callback(&worldCfg, args...); err != nil {
 				// @TODO: not sure if below is the best way to do this
 				//        it looks gross and is most likely not something
