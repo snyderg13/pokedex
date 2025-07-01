@@ -13,6 +13,7 @@ import (
 const (
 	pokeAPIBaseURL       = "https://pokeapi.co/api/v2/"
 	locationAreaEndpoint = "https://pokeapi.co/api/v2/location-area/"
+	pokemonEndpoint      = "https://pokeapi.co/api/v2/pokemon/"
 	cacheReapRate        = 10 * time.Second
 )
 
@@ -221,6 +222,73 @@ type LocationDetails struct {
 func (l LocationDetails) DoGetData(locName string) (LocationDetails, error) {
 	url := locationAreaEndpoint + locName + "/"
 	var results LocationDetails
+	cacheData, found := pokeAPICache.Get(url)
+	if found {
+		err := json.Unmarshal(cacheData, &results)
+		if err != nil {
+			fmt.Println("failed to unmarshal cache data", err)
+		}
+
+		if pokeAPIDebug {
+			fmt.Println("CLIENT: Cache get was used")
+		}
+		return results, err
+	}
+
+	res, err := http.Get(url)
+	if err != nil {
+		// @TODO cleanup below lines
+		fmt.Println("http req failed")
+		fmt.Println(fmt.Errorf("http req failed: %w", err))
+		return results, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode > 299 {
+		return results, fmt.Errorf("status code (%d) > 299", res.StatusCode)
+	} else if res.StatusCode != 200 {
+		fmt.Printf("status code (%d) != 200\n", res.StatusCode)
+	}
+
+	// convert results to []byte and add to the cache
+	bytesBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return results, err
+	}
+
+	// add data byte slice to cache
+	pokeAPICache.Add(url, bytesBody)
+	if pokeAPIDebug {
+		fmt.Println("CLIENT: Cache add was used")
+	}
+
+	// unmarshal into the LocAreaResp to return to the caller
+	err = json.Unmarshal(bytesBody, &results)
+	if err != nil {
+		fmt.Println("failed to unmarshal cache data", err)
+	}
+
+	return results, nil
+}
+
+type PokemonStats struct {
+	Abilities []struct {
+		Ability struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"ability"`
+		IsHidden bool `json:"is_hidden"`
+		Slot     int  `json:"slot"`
+	} `json:"abilities"`
+	BaseExperience int `json:"base_experience"`
+	DataBlob       []byte
+}
+
+func (p PokemonStats) DoGetData(pokemonName string) (PokemonStats, error) {
+	url := pokemonEndpoint + pokemonName + "/"
+	fmt.Println("url = ", url)
+	var results PokemonStats
 	cacheData, found := pokeAPICache.Get(url)
 	if found {
 		err := json.Unmarshal(cacheData, &results)
