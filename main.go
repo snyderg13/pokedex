@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"strings"
 
@@ -48,6 +49,11 @@ func initCmds() {
 			name:        "explore",
 			description: "Explore an area for pokemon",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Attempt to catch a pokemon",
+			callback:    commandCatch,
 		},
 	}
 }
@@ -154,6 +160,48 @@ func commandExplore(cfg *cmdConfig, args ...string) error {
 	// since the user only chose to explore an area;
 	// next and prev are only really used for map and mapb
 	// up to this point in development
+
+	return nil
+}
+
+func commandCatch(cfg *cmdConfig, args ...string) error {
+	if len(args[0]) == 0 {
+		return fmt.Errorf("Did not provide pokemon name")
+	}
+
+	fmt.Printf("Throwing a Pokeball at %s...\n", args[0])
+
+	randVal := rand.Float32()
+	fmt.Printf("Randomly generated value = %f == %v\n", randVal, randVal)
+	// @TODO: fetch the pokemon data and use the chance
+	//        plus a random number to determine if the
+	//        user's catch attempt is successful
+	//        use base_experience field on some sort of scaled chance range to determine success
+	// psuedo code:
+
+	var results pokeapi.PokemonStats
+	results, err := results.DoGetData(args[0])
+	if err != nil {
+		fmt.Println("Exp: get data ret: ", err)
+		return err
+	}
+
+	base_exp := results.BaseExperience
+	fmt.Printf("%s base exp is %d\n", args[0], base_exp)
+
+	if base_exp > 600 {
+		// 5 % chance to catch
+	} else if base_exp > 500 {
+		// 7.5 % chance to catch
+	} else if base_exp > 400 {
+		// 10 % chance to catch
+	} else if base_exp > 200 {
+		// 15 % chance to catch
+	} else if base_exp > 100 {
+		// 20 % chance to catch
+	} else {
+		// 25 % chance to catch
+	}
 
 	return nil
 }
