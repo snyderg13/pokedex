@@ -165,7 +165,7 @@ func commandExplore(cfg *cmdConfig, args ...string) error {
 }
 
 func commandCatch(cfg *cmdConfig, args ...string) error {
-	if len(args[0]) == 0 {
+	if len(args) == 0 {
 		return fmt.Errorf("Did not provide pokemon name")
 	}
 
