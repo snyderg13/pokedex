@@ -220,9 +220,10 @@ func commandCatch(cfg *cmdConfig, args ...string) error {
 	}
 
 	if catchSuccessful {
-		fmt.Println(args[0], " was caught!")
+		fmt.Println(args[0], "was caught!")
+		// @TODO add captured pokemon to user's pokedex
 	} else {
-		fmt.Println(args[0], " escaped!")
+		fmt.Println(args[0], "escaped!")
 	}
 
 	return nil
