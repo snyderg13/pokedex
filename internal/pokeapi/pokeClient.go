@@ -287,7 +287,9 @@ type PokemonStats struct {
 
 func (p PokemonStats) DoGetData(pokemonName string) (PokemonStats, error) {
 	url := pokemonEndpoint + pokemonName + "/"
-	fmt.Println("url = ", url)
+	if pokeAPIDebug {
+		fmt.Println("url = ", url)
+	}
 	var results PokemonStats
 	cacheData, found := pokeAPICache.Get(url)
 	if found {
