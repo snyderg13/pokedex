@@ -172,7 +172,7 @@ func commandExplore(cfg *cmdConfig, args ...string) error {
 
 func commandCatch(cfg *cmdConfig, args ...string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("Did not provide pokemon name")
+		return fmt.Errorf("no pokemon name provided")
 	}
 	catchDebug := false
 	name := args[0]
@@ -224,8 +224,8 @@ func commandCatch(cfg *cmdConfig, args ...string) error {
 			catchSuccessful = true
 		}
 	} else {
-		// 25 % chance to catch
-		if randIntVal >= 75 {
+		// 50 % chance to catch
+		if randIntVal >= 50 {
 			catchSuccessful = true
 		}
 	}
@@ -274,7 +274,7 @@ func main() {
 		// check for scanner errors
 		err := inputScanner.Err()
 		if err != nil {
-			fmt.Errorf("inputScanner returned error: %w", err)
+			fmt.Println(fmt.Errorf("inputScanner returned error: %w", err))
 		}
 
 		// get text input from the user
