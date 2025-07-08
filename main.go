@@ -52,17 +52,17 @@ func initCmds() {
 			callback:    commandMapb,
 		},
 		"explore": {
-			name:        "explore",
+			name:        "explore <location_name>",
 			description: "Explore an area for pokemon",
 			callback:    commandExplore,
 		},
 		"catch": {
-			name:        "catch",
+			name:        "catch <pokemon_name>",
 			description: "Attempt to catch a pokemon",
 			callback:    commandCatch,
 		},
 		"inspect": {
-			name:        "inspect",
+			name:        "inspect <pokemon_name>",
 			description: "Displays stats for a pokemon",
 			callback:    commandInspect,
 		},
