@@ -61,6 +61,11 @@ func initCmds() {
 			description: "Attempt to catch a pokemon",
 			callback:    commandCatch,
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "Displays stats for a pokemon",
+			callback:    commandInspect,
+		},
 	}
 }
 
@@ -251,6 +256,36 @@ func commandCatch(cfg *cmdConfig, args ...string) error {
 		}
 	} else {
 		fmt.Println(name, "escaped!")
+	}
+
+	return nil
+}
+
+func commandInspect(cfg *cmdConfig, args ...string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("no pokemon name provided")
+	}
+	inspectDebug := false
+	name := args[0]
+	if inspectDebug {
+		fmt.Printf("Inspecting %s...\n", name)
+	}
+
+	stats, ok := Pokedex[name]
+	if !ok {
+		fmt.Println("you have not caught that pokemon")
+	} else {
+		fmt.Println("Name:", stats.Name)
+		fmt.Println("Height:", stats.Height)
+		fmt.Println("Weight:", stats.Weight)
+		fmt.Println("Stats:")
+		for _, v := range stats.Stats {
+			fmt.Printf("  -%s: %d\n", v.Stat.Name, v.BaseStat)
+		}
+		fmt.Println("Types:")
+		for _, v := range stats.Types {
+			fmt.Printf("  - %s\n", v.Type.Name)
+		}
 	}
 
 	return nil
