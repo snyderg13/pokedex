@@ -171,13 +171,8 @@ func commandCatch(cfg *cmdConfig, args ...string) error {
 
 	fmt.Printf("Throwing a Pokeball at %s...\n", args[0])
 
-	randVal := rand.Float32()
-	fmt.Printf("Randomly generated value = %f == %v\n", randVal, randVal)
-	// @TODO: fetch the pokemon data and use the chance
-	//        plus a random number to determine if the
-	//        user's catch attempt is successful
-	//        use base_experience field on some sort of scaled chance range to determine success
-	// psuedo code:
+	randIntVal := int32(rand.Float32() * 100)
+	fmt.Printf("Random int val = %d == %v\n", randIntVal, randIntVal)
 
 	var results pokeapi.PokemonStats
 	results, err := results.DoGetData(args[0])
@@ -190,18 +185,44 @@ func commandCatch(cfg *cmdConfig, args ...string) error {
 	fmt.Printf("%s base exp is %d\n", args[0], base_exp)
 
 	// @TODO figure out best way to use RNG with below catch chance
+	//       might need to revisit and/or chance chance percentages
+	catchSuccessful := false
 	if base_exp > 600 {
 		// 5 % chance to catch
+		if randIntVal >= 95 {
+			catchSuccessful = true
+		}
 	} else if base_exp > 500 {
 		// 7.5 % chance to catch
+		if randIntVal >= 92 {
+			catchSuccessful = true
+		}
 	} else if base_exp > 400 {
 		// 10 % chance to catch
+		if randIntVal >= 90 {
+			catchSuccessful = true
+		}
 	} else if base_exp > 200 {
 		// 15 % chance to catch
+		if randIntVal >= 85 {
+			catchSuccessful = true
+		}
 	} else if base_exp > 100 {
 		// 20 % chance to catch
+		if randIntVal >= 80 {
+			catchSuccessful = true
+		}
 	} else {
 		// 25 % chance to catch
+		if randIntVal >= 75 {
+			catchSuccessful = true
+		}
+	}
+
+	if catchSuccessful {
+		fmt.Println(args[0], " was caught!")
+	} else {
+		fmt.Println(args[0], " escaped!")
 	}
 
 	return nil
