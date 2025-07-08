@@ -2,6 +2,7 @@
 
 ## Ideas for Improvements and Expansion
 * Update the CLI to support the "up" arrow to cycle through previous commands (constant thought during manual testing that would be very helpful)
+* Rework the RNG for catching pokemon
 * Simulate battles between pokemon
 * Add more unit tests for commands
 * Refactor code to organize it better and make it more testable
