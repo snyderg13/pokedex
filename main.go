@@ -10,6 +10,12 @@ import (
 	"github.com/snyderg13/pokedex/internal/pokeapi"
 )
 
+var Pokedex map[string]pokeapi.PokemonStats
+
+func initPokedex() {
+	Pokedex = make(map[string]pokeapi.PokemonStats)
+}
+
 type cmdConfig struct {
 	Next string
 	Prev string
@@ -168,21 +174,26 @@ func commandCatch(cfg *cmdConfig, args ...string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("Did not provide pokemon name")
 	}
-
-	fmt.Printf("Throwing a Pokeball at %s...\n", args[0])
+	catchDebug := false
+	name := args[0]
+	fmt.Printf("Throwing a Pokeball at %s...\n", name)
 
 	randIntVal := int32(rand.Float32() * 100)
-	fmt.Printf("Random int val = %d == %v\n", randIntVal, randIntVal)
+	if catchDebug {
+		fmt.Printf("Random int val = %d == %v\n", randIntVal, randIntVal)
+	}
 
 	var results pokeapi.PokemonStats
-	results, err := results.DoGetData(args[0])
+	results, err := results.DoGetData(name)
 	if err != nil {
 		fmt.Println("Exp: get data ret: ", err)
 		return err
 	}
 
 	base_exp := results.BaseExperience
-	fmt.Printf("%s base exp is %d\n", args[0], base_exp)
+	if catchDebug {
+		fmt.Printf("%s base exp is %d\n", name, base_exp)
+	}
 
 	// @TODO figure out best way to use RNG with below catch chance
 	//       might need to revisit and/or chance chance percentages
@@ -220,10 +231,26 @@ func commandCatch(cfg *cmdConfig, args ...string) error {
 	}
 
 	if catchSuccessful {
-		fmt.Println(args[0], "was caught!")
+		fmt.Println(name, "was caught!")
 		// @TODO add captured pokemon to user's pokedex
+		Pokedex[name] = results
+		if catchDebug {
+			fmt.Println("User Pokedex = ", Pokedex)
+		}
+
+		val, ok := Pokedex[name]
+		if !ok {
+			if catchDebug {
+				fmt.Println(name, "not in pokedex, adding")
+			}
+		} else {
+			if catchDebug {
+				fmt.Println(name, "already in pokedex")
+				fmt.Println("pokemon data = ", val)
+			}
+		}
 	} else {
-		fmt.Println(args[0], "escaped!")
+		fmt.Println(name, "escaped!")
 	}
 
 	return nil
@@ -235,6 +262,7 @@ func main() {
 	worldCfg := cmdConfig{}
 	initCmds()
 	pokeapi.Init()
+	initPokedex()
 	mainDebug := false
 	inputScanner := bufio.NewScanner(os.Stdin)
 
