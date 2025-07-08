@@ -66,6 +66,11 @@ func initCmds() {
 			description: "Displays stats for a pokemon",
 			callback:    commandInspect,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Displays stats for a pokemon",
+			callback:    commandPokedex,
+		},
 	}
 }
 
@@ -288,6 +293,14 @@ func commandInspect(cfg *cmdConfig, args ...string) error {
 		}
 	}
 
+	return nil
+}
+
+func commandPokedex(cfg *cmdConfig, args ...string) error {
+	fmt.Println("Your Pokedex:")
+	for k := range Pokedex {
+		fmt.Printf(" - %s\n", k)
+	}
 	return nil
 }
 
