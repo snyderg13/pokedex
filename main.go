@@ -350,6 +350,8 @@ func main() {
 			} else {
 				// @TODO: other logic to be added if needed
 				//        intentionally empty for now on purpose
+				// @TODO: figure out best way to cache/keep track of
+				//        commands to add "up-arrow" functionality
 				if mainDebug {
 					fmt.Printf("worldCfg.Next = %s, worldCfg.Prev = %s\n", worldCfg.Next, worldCfg.Prev)
 				}
