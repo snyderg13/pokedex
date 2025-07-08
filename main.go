@@ -189,6 +189,7 @@ func commandCatch(cfg *cmdConfig, args ...string) error {
 	base_exp := results.BaseExperience
 	fmt.Printf("%s base exp is %d\n", args[0], base_exp)
 
+	// @TODO figure out best way to use RNG with below catch chance
 	if base_exp > 600 {
 		// 5 % chance to catch
 	} else if base_exp > 500 {
