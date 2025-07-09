@@ -14,3 +14,7 @@
 * Use the PokeAPI to make exploration more interesting. For example, rather than typing the names of areas, maybe give the user a choice of areas and then they can just type "left" or "right"
 * Random encounters with wild pokemon
 * Adding support for different types of balls (Pokeballs, Great Balls, Ultra Balls, etc), which have different chances of catching pokemon
+
+## Installation and Setup (How to Use)
+### Requirements (WIP)
+* Go >= 1.24.4
